@@ -1,22 +1,24 @@
 const imageUpload = document.getElementById('imageUpload')
 
 Promise.all([
-    faceapi.nets.faceRecongnitionNet.loadFromUri('/models'),
+    faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
     faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-    faceapi.nets.ssdMobilenetv1.loadFromUri('models')
-]).then(start)
+    faceapi.nets.ssdMobilenetv1.loadFromUri('/models')
+    ]).then(start)
 
-async function start() {
+async function start(){
     const container = document.createElement('div')
     container.style.position = 'relative'
     document.body.append(container)
-    const labledFaceDescriptor = await loadLabeledImages()
-    const faceMatcher = new faceapi.faceMatcher(labledFaceDescriptor, 0.6)
+    const labeledFaceDescriptors = await loadLabeledImages()
+    const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6)
     let image, canvas
 
     document.body.append('โหลดเสร็จแล้ว')
 
-    imageUpload.addEventListener('change', async() => {
+    imageUpload.addEventListener('change', async () => {
+        if (image) image.remove()
+        if (canvas) canvas.remove()
         image = await faceapi.bufferToImage(imageUpload.files[0])
         container.append(image)
         canvas = faceapi.createCanvasFromMedia(image)
@@ -25,27 +27,29 @@ async function start() {
         faceapi.matchDimensions(canvas, displaySize)
         const detections = await faceapi.detectAllFaces(image).withFaceLandmarks().withFaceDescriptors()
         const resizedDetections = faceapi.resizeResults(detections, displaySize)
-        const result = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor))
-        result.forEach((result, i) => {
+        const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor))
+        results.forEach((result, i) => {
             const box = resizedDetections[i].detection.box
             const drawBox = new faceapi.draw.DrawBox(box, { label: result.toString() })
             drawBox.draw(canvas)
-        })
+          })
     })
 }
 
 function loadLabeledImages() {
-    const labels = ['Jisoo', 'Jennie', 'Lisa', 'Rose']
+    const labels = ['Jisoo', 'Jennie', 'Lisa', 'Rose', 'Irene', 'Seulgi', 'Wendy', 'Joy', 'Yeri']
     return Promise.all(
         labels.map(async label => {
             const descriptions = []
             for (let i = 1; i <= labels.length; i++) {
-                const img = await faceapi.fetchImage('')
-                const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor()
-                descriptions.push(detections.descriptor)
+                for (let j = 1; j <= labels[i].length; j++) {
+                    const img = await faceapi.fetchImage(`https://raw.githubusercontent.com/coregatekit/FaceRecognitionJS/master/labeled_images/${label}/${i}.jpg`)
+                    const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor()
+                    descriptions.push(detections.descriptor)
+                }
             }
-
-            return new faceapi.LabeledFaceDescriptors(label, descriptions)
-        })
-    )
+                
+        return new faceapi.LabeledFaceDescriptors(label, descriptions)
+    })
+  )
 }

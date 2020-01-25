@@ -43,7 +43,7 @@ function loadLabeledImages() {
             const descriptions = []
             for (let i = 1; i <= labels.length; i++) {
                 for (let j = 1; j <= labels[i].length; j++) {
-                    const img = await faceapi.fetchImage(`https://raw.githubusercontent.com/coregatekit/FaceRecognitionJS/master/labeled_images/${label}/${i}.jpg`)
+                    const img = await faceapi.fetchImage(`https://raw.githubusercontent.com/coregatekit/FaceRecognitionJS/master/labeled_images/${label}/1%20(${i}).jpg`)
                     const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor()
                     descriptions.push(detections.descriptor)
                 }
